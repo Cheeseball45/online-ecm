@@ -1,0 +1,56 @@
+version: "3.8"
+
+# Full Online ECM stack
+# Joins the existing battsoft-net network where battdb and Temporal live
+#
+# Run with:
+#   docker compose -f docker-compose-ecm.yml up -d --build
+#
+# Then start a run with:
+#   docker compose -f docker-compose-ecm.yml run --rm ecm-starter \
+#     --test CALCE_A1-007_OCV_neg10C_20120629
+
+networks:
+  battsoft-net:
+    external: true
+
+services:
+
+  # ── ECM Worker ─────────────────────────────────────────────────────────────
+  ecm-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecm-worker
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      DB_HOST:          pgbouncer
+      DB_PORT:          6432
+      DB_NAME:          battdb
+      DB_USER:          postgres
+      DB_PASSWORD:      password
+    networks:
+      - battsoft-net
+
+  # ── One-shot starter ───────────────────────────────────────────────────────
+  # Use this to kick off a run:
+  #   docker compose -f docker-compose-ecm.yml run --rm ecm-starter \
+  #     --test CALCE_A1-007_OCV_neg10C_20120629 --lam 0.98
+  ecm-starter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecm-starter
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      DB_HOST:          pgbouncer
+      DB_PORT:          6432
+      DB_NAME:          battdb
+      DB_USER:          postgres
+      DB_PASSWORD:      password
+    networks:
+      - battsoft-net
+    entrypoint: ["python", "start_run.py"]
+    profiles:
+      - starter
