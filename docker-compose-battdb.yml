@@ -1,0 +1,68 @@
+version: "3.8"
+
+# BattDB stack — TimescaleDB + pgbouncer
+#
+# Creates the battsoft-net network and starts postgres + pgbouncer.
+# Port 5454 on the host connects to battdb via pgbouncer.
+#
+# Run with:
+#   docker compose -f docker-compose-battdb.yml up -d
+#
+# Connect with:
+#   host: localhost
+#   port: 5454
+#   user: postgres
+#   password: password
+#   database: battdb
+
+networks:
+  battsoft-net:
+    name: battsoft-net
+    driver: bridge
+
+volumes:
+  battdb-data:
+
+services:
+
+  # ── TimescaleDB ────────────────────────────────────────────────────────────
+  postgres:
+    image: timescale/timescaledb:2.14.2-pg15
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB:       battdb
+    volumes:
+      - battdb-data:/var/lib/postgresql/data
+    networks:
+      - battsoft-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d battdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── pgBouncer ──────────────────────────────────────────────────────────────
+  pgbouncer:
+    image: bitnami/pgbouncer:1.22.1
+    container_name: pgbouncer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_HOST:          postgres
+      POSTGRESQL_PORT:          5432
+      POSTGRESQL_USERNAME:      postgres
+      POSTGRESQL_PASSWORD:      password
+      POSTGRESQL_DATABASE:      battdb
+      PGBOUNCER_DATABASE:       battdb
+      PGBOUNCER_POOL_MODE:      transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 100
+      PGBOUNCER_DEFAULT_POOL_SIZE: 20
+    ports:
+      - "5454:6432"
+    networks:
+      - battsoft-net
