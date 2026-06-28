@@ -1,0 +1,128 @@
+{
+  "title": "Online ECM — Parameter Estimation",
+  "uid": "online-ecm",
+  "schemaVersion": 38,
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Measured vs Predicted Voltage",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT recorded_at AS time, v_measured * 1000 AS \"Measured (mV)\", v_predicted * 1000 AS \"Predicted (mV)\" FROM ecm_predictions WHERE test_id = 180 AND recorded_at IS NOT NULL AND recorded_at != '' ORDER BY window_index, recorded_at LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "mV" }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Prediction Error (mV)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT recorded_at AS time, abs_error * 1000 AS \"Abs error (mV)\" FROM ecm_predictions WHERE test_id = 180 AND recorded_at IS NOT NULL ORDER BY window_index LIMIT 10000",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "mV", "color": { "fixedColor": "orange", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "R0 — Internal Resistance",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 14, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT window_index AS time, r0 AS \"R0 (Ω)\" FROM ecm_params WHERE test_id = 180 ORDER BY window_index",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ohm", "color": { "fixedColor": "blue", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 4,
+      "title": "R1 — RC Pair Resistance",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 14, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT window_index AS time, r1 AS \"R1 (Ω)\" FROM ecm_params WHERE test_id = 180 ORDER BY window_index",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ohm", "color": { "fixedColor": "red", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Window RMSE (mV)",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 14, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT window_index AS time, window_rmse AS \"Window RMSE (mV)\" FROM ecm_params WHERE test_id = 180 ORDER BY window_index",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "mV", "color": { "fixedColor": "green", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 6,
+      "title": "State of Charge",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT window_index AS time, soc AS \"SOC\" FROM ecm_params WHERE test_id = 180 ORDER BY window_index",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "min": 0, "max": 1 }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Stats",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT COUNT(*) AS \"Total windows\" FROM ecm_params WHERE test_id = 180",
+          "format": "table"
+        },
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT ROUND(AVG(window_rmse)::numeric, 2) AS \"Avg RMSE (mV)\" FROM ecm_params WHERE test_id = 180",
+          "format": "table"
+        },
+        {
+          "datasource": "BattDB",
+          "rawSql": "SELECT ROUND(MIN(window_rmse)::numeric, 2) AS \"Best RMSE (mV)\" FROM ecm_params WHERE test_id = 180",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

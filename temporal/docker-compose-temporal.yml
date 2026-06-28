@@ -1,0 +1,95 @@
+version: "3.8"
+
+networks:
+  battsoft-net:
+    external: true
+
+volumes:
+  temporal-db-data:
+  grafana-data:
+
+services:
+
+  temporal-db:
+    image: postgres:15
+    container_name: temporal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB:       temporal
+    ports:
+      - "5455:5432"
+    volumes:
+      - temporal-db-data:/var/lib/postgresql/data
+    networks:
+      - battsoft-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal -d temporal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.27
+    container_name: temporal
+    restart: unless-stopped
+    depends_on:
+      temporal-db:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-db
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - "7233:7233"
+    volumes:
+      - ./temporal-dynamicconfig:/etc/temporal/config/dynamicconfig
+    networks:
+      - battsoft-net
+
+  temporal-ui:
+    image: temporalio/ui:2.37.2
+    container_name: temporal-ui
+    restart: unless-stopped
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8080
+    ports:
+      - "8080:8080"
+    networks:
+      - battsoft-net
+
+  temporal-admin-tools:
+    image: temporalio/admin-tools:1.27
+    container_name: temporal-admin-tools
+    restart: unless-stopped
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    stdin_open: true
+    tty: true
+    networks:
+      - battsoft-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - battsoft-net
