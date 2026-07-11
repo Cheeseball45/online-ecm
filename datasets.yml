@@ -1,0 +1,107 @@
+# datasets.yml — Dataset registry for online-ecm ingestion
+#
+# Add a new entry here for each dataset you want to ingest.
+# Then run: python ingest.py
+#
+# source types:
+#   arbin        — Arbin BT2000 Excel export (.xlsx)
+#   maccor       — Maccor Series 4000 text export (.txt)
+#   stanford_csv — Severson et al. 2019 CSV (QC, QD, IR, Tavg, chargetime...)
+#   nasa_csv     — NASA battery dataset CSV (voltage, temperature, capacity, soh, rul)
+
+datasets:
+
+  # ── Stanford cycle life dataset ──────────────────────────────────────────
+  - name:    Stanford_CycleLife_2019
+    source:  stanford_csv
+    enabled: true
+    files:
+      full:  data/stanford/Lithium-Ion Battery Cycle Life.csv
+      100cy: data/stanford/100_Cycle_Lithium-Ion Battery Cycle Life.csv
+      50cy:  data/stanford/50_Cycle_Lithium-Ion Battery Cycle Life.csv
+    cell_meta:
+      manufacturer:    A123 Systems
+      manufacturer_pn: APR18650M1A
+      form_factor:     18650
+      capacity_mah:    1100
+      chemistry:       LFP/graphite
+    project: Stanford_CycleLife_2019
+    customer: Public
+
+  # ── NASA battery dataset ─────────────────────────────────────────────────
+  - name:    NASA_Battery_2023
+    source:  nasa_csv
+    enabled: true
+    file:    data/nasa/battery_cycle_level_dataset_CLEAN_FINAL.csv
+    cell_meta:
+      manufacturer:    NASA
+      manufacturer_pn: NASA-18650
+      form_factor:     18650
+      capacity_mah:    2000
+      chemistry:       LCO
+    project: NASA_Battery
+    customer: Public
+
+  # ── CALCE A1 OCV tests ───────────────────────────────────────────────────
+  # - name:    CALCE_A1_OCV
+  #   source:  arbin
+  #   enabled: true
+  #   cells:
+  #     - cell_folder:     data/calce/A1-007
+  #       manufacturer_sn: A1-007
+  #       batch_number:    A1
+  #       cycler_sn:       CALCE-ARBIN-CH005
+  #       schedule_name:   OCV-10-20120629
+  #       test_type:       Characterization
+  #       comments:        OCV test at -10C
+  #   cell_meta:
+  #     manufacturer:    Unknown
+  #     manufacturer_pn: CALCE-A1
+  #     form_factor:     prismatic
+  #     chemistry:       LCO
+  #   cycler_meta:
+  #     manufacturer: Arbin
+  #     model:        BT2000
+  #   project:  CALCE_A1_OCV
+  #   customer: Public
+
+  # ── CALCE CS2 cycling data ───────────────────────────────────────────────
+  # - name:    CALCE_CS2
+  #   source:  arbin
+  #   enabled: false
+  #   cells:
+  #     - cell_folder:     data/calce/CS2-33
+  #       manufacturer_sn: CS2-33
+  #       batch_number:    CS2
+  #       cycler_sn:       CALCE-ARBIN-CS2
+  #       schedule_name:   CS2_0.5C_cycle
+  #       test_type:       Baseline life cycling
+  #       comments:        0.5C constant current cycling
+  #   cell_meta:
+  #     manufacturer:    Unknown
+  #     manufacturer_pn: CALCE-CS2
+  #     form_factor:     prismatic
+  #     chemistry:       LCO
+  #   cycler_meta:
+  #     manufacturer: Arbin
+  #     model:        BT2000
+  #   project:  CALCE_CS2
+  #   customer: Public
+
+  # ── Maccor example (uncomment and fill in) ───────────────────────────────
+  # - name:    MyMaccorTest
+  #   source:  maccor
+  #   enabled: false
+  #   file:    data/maccor/MyTest.txt
+  #   cell_meta:
+  #     manufacturer:    MyManufacturer
+  #     manufacturer_pn: MY-CELL-001
+  #     form_factor:     18650
+  #     capacity_mah:    3000
+  #     chemistry:       NMC
+  #   cycler_meta:
+  #     manufacturer: Maccor
+  #     model:        Series 4000
+  #   schedule_name: MySchedule
+  #   project:  MyProject
+  #   customer: Internal
